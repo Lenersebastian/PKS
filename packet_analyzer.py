@@ -164,7 +164,7 @@ def create_output_dictionary_packets():
                     packet_o = {
                         'frame_number': frame_number,
                         'len_frame_pcap': len_pcap,
-                        'len_frame_medium': len_pcap + 4,
+                        'len_frame_medium': len_pcap_medium,
                         'frame_type': frame_type,
                         'src_mac': src_mac,
                         'dst_mac': dst_mac,
@@ -181,7 +181,7 @@ def create_output_dictionary_packets():
                     packet_o = {
                         'frame_number': frame_number,
                         'len_frame_pcap': len_pcap,
-                        'len_frame_medium': len_pcap + 4,
+                        'len_frame_medium': len_pcap_medium,
                         'frame_type': frame_type,
                         'src_mac': src_mac,
                         'dst_mac': dst_mac,
@@ -197,7 +197,7 @@ def create_output_dictionary_packets():
                 packet_o = {
                     'frame_number': frame_number,
                     'len_frame_pcap': len_pcap,
-                    'len_frame_medium': len_pcap + 4,
+                    'len_frame_medium': len_pcap_medium,
                     'frame_type': frame_type,
                     'src_mac': src_mac,
                     'dst_mac': dst_mac,
@@ -211,7 +211,7 @@ def create_output_dictionary_packets():
             packet_o = {
                 'frame_number': frame_number,
                 'len_frame_pcap': len_pcap,
-                'len_frame_medium': len_pcap + 4,
+                'len_frame_medium': len_pcap_medium,
                 'frame_type': frame_type,
                 'src_mac': src_mac,
                 'dst_mac': dst_mac,
@@ -224,7 +224,7 @@ def create_output_dictionary_packets():
         packet_o = {
             'frame_number': frame_number,
             'len_frame_pcap': len_pcap,
-            'len_frame_medium': len_pcap + 4,
+            'len_frame_medium': len_pcap_medium,
             'frame_type': frame_type,
             'src_mac': src_mac,
             'dst_mac': dst_mac,
@@ -234,7 +234,7 @@ def create_output_dictionary_packets():
         packet_o = {
             'frame_number': frame_number,
             "len_frame_pcap": len_pcap,
-            'len_frame_medium': len_pcap + 4,
+            'len_frame_medium': len_pcap_medium,
             'frame_type': frame_type,
             'src_mac': src_mac,
             'dst_mac': dst_mac,
@@ -245,7 +245,7 @@ def create_output_dictionary_packets():
         packet_o = {
             'frame_number': frame_number,
             "len_frame_pcap": len_pcap,
-            'len_frame_medium': len_pcap + 4,
+            'len_frame_medium': len_pcap_medium,
             'frame_type': frame_type,
             'src_mac': src_mac,
             'dst_mac': dst_mac,
@@ -304,8 +304,9 @@ for i in packets:
 
     len_pcap = len(bytes(i))
     if len_pcap < 64:
-        len_pcap = 60
-
+        len_pcap_medium = 64
+    else:
+        len_pcap_medium = len(bytes(i)) + 4
     frame_type = frame_type_f()
 
     data_pin = pid_f()
