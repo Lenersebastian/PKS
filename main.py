@@ -1,31 +1,8 @@
-import arp
-import tcp
-import icmp
-import argparse
+import server
+import client
 
-
-def switch_p():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--parameter')
-    args = parser.parse_args()
-
-    if args.parameter == "TCP":
-        tcp.tcp_f()
-        print("vyslo TCP")
-    elif args.parameter == "ARP":
-        arp.arp_f()
-        print("vyslo ARP")
-    elif args.parameter == "ICMP":
-        icmp.icmp_f()
-        print("vyslo ICMP")
-    elif args.parameter == "TFTP":
-        tftp.tftp()
-        print("vyslo TFTP")
-    else:
-        print("Zle")
-
-
-if __name__ == "__main__":
-    switch_p()
-
-
+c_or_s = int(input("Receiver(0) or sender?(1): "))
+if c_or_s:
+    client.main()
+else:
+    server.main()
