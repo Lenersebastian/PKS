@@ -30,15 +30,23 @@ def calculate_crc(data):
 
 
 def create_packet(data, number_of_fragments, fragment_num, message_type):
-    packet = struct.pack('!B', message_type) + struct.pack('!H', len(data)) + \
-             struct.pack('!H', calculate_crc(data.encode('utf-8'))) + struct.pack('!H', number_of_fragments) + \
-             struct.pack('!H', fragment_num) + struct.pack('!{}s'.format(len(data)), data.encode('utf-8'))
+    if isinstance(data, bytes):
+        data_packed = struct.pack('!{}s'.format(len(data)), data)
+        crc = struct.pack('!H', calculate_crc(data))
+    else:
+        data_packed = struct.pack('!{}s'.format(len(data)), data.encode('utf-8'))
+        crc = struct.pack('!H', calculate_crc(data.encode('utf-8')))
+    packet = struct.pack('!B', message_type) + struct.pack('!H', len(data)) + crc + struct.pack(
+        '!H', number_of_fragments) + struct.pack('!H', fragment_num) + data_packed
     return packet
 
 
 def how_many_fragments(data, frag_length):
+    if isinstance(data, bytes):
+        num_of_fragments = math.ceil(len(data) / (frag_length - 9))
+    else:
+        num_of_fragments = math.ceil(len(data.encode('utf-8')) / (frag_length - 9))
     # minus bytes of my header, UDP header, IP header
-    num_of_fragments = math.ceil(len(data.encode('utf-8')) / (frag_length - 9))
     return num_of_fragments
 
 
@@ -95,8 +103,8 @@ def check_if_right_answer(message):
 
 def sending_message(client):
     info_packet = create_packet("Message", 1, 0, 7)
+    client.send(info_packet)
     while True:
-        client.send(info_packet)
         try:
             message, address = client.recvfrom(100)
             con, check = check_if_right_answer(message)
@@ -121,12 +129,19 @@ def sending_message(client):
             else:
                 successful_fragments += 1
             # receive till the last packet was sent
-            # print(int.from_bytes(message[5:7], byteorder='big'))
-            # print(successful_fragments)
             if successful_fragments == int.from_bytes(message[5:7], byteorder='big'):
                 break
         except socket.timeout:
             pass
+
+
+def name_of_file(path):
+    name = ""
+    for char in reversed(path):
+        name = char + name
+        if char == "\\":
+            break
+    return name
 
 
 def sending_files(client):
@@ -134,9 +149,52 @@ def sending_files(client):
     info_packet = create_packet("File", 1, 0, 8)
     with open(path, 'rb') as file:
         data = file.read()
+    client.send(info_packet)
     while True:
-        ##################################tu si skoncil, treba poriesit ze ked data uz vstupuje ako bytes do send fragments
-        send_fragments(client, data)
+        try:
+            message, address = client.recvfrom(100)
+            con, check = check_if_right_answer(message)
+            if not check:
+                # send invalid packets again
+                pass
+            else:
+                break
+        except socket.timeout:
+            pass
+    send_fragments(client, name_of_file(path))
+    successful_fragments = 0
+    while True:
+        try:
+            message, address = client.recvfrom(100)
+            print(message[9:])
+            con, check = check_if_right_answer(message)
+            if not check:
+                # send invalid packets again
+                pass
+            else:
+                successful_fragments += 1
+            # receive till the last packet was sent
+            if successful_fragments == int.from_bytes(message[5:7], byteorder='big'):
+                break
+        except socket.timeout:
+            pass
+    send_fragments(client, data)
+    while True:
+        try:
+            message, address = client.recvfrom(100)
+            print(message[9:])
+            con, check = check_if_right_answer(message)
+            if not check:
+                # send invalid packets again
+                pass
+            else:
+                successful_fragments += 1
+            # receive till the last packet was sent
+            if successful_fragments == int.from_bytes(message[5:7], byteorder='big'):
+                break
+        except socket.timeout:
+            pass
+
 
 def main():
     while True:
@@ -148,7 +206,7 @@ def main():
         main_thread.start()
         con = True
         while con:
-            m_or_f = bool(input("File(0) or message(1): "))
+            m_or_f = int(input("File(0) or message(1): "))
             if m_or_f:
                 stop_flag_thread.set()
                 thread_keep_alive.join()
@@ -163,3 +221,5 @@ def main():
                 stop_flag_thread = threading.Event()
                 thread_keep_alive = threading.Thread(target=keep_alive, args=(client_socket, stop_flag_thread))
                 thread_keep_alive.start()
+
+# "C:\Users\lener\Desktop\macka_more.png"
