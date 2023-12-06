@@ -117,6 +117,8 @@ def sending_message(client):
             return
     client.settimeout(5)
     message_send = input("Write your message: ")
+    for i in range(len(message_send)):
+        message_send = message_send[:i] + chr(ord(message_send[i]) + 3) + message_send[i + 1:]
     frag_size = int(input("Fragment size: "))
     successful_fragments = 0
     counter = 0
@@ -126,11 +128,11 @@ def sending_message(client):
     print(f"Sent {frags} packets")
     all_packets = []
     for i in range(frags):
-        packet = create_packet(message_send[frag_index:frag_size + frag_index], frags, frags-i-1, 6)
+        packet = create_packet("_BEGIN_" + message_send[frag_index:frag_size + frag_index] + "_END_", frags, i, 6)
         frag_index += frag_size
         all_packets.append(packet)
     while True:
-        packet = all_packets[frags-counter-1]
+        packet = all_packets[counter]
         if counter in indexes_of_corrupted_packets:
             packet = packet[:3] + b'\x00\x00' + packet[5:]  # wrong crc
             indexes_of_corrupted_packets.remove(counter)
@@ -215,7 +217,7 @@ def sending_files(client):
     print(f"Sending {frags} fragments of file data")
     all_packets = []
     for i in range(frags):
-        packet = create_packet(data[frag_index:frag_size + frag_index], frags, frags-1-i, 6)
+        packet = create_packet(data[frag_index:frag_size + frag_index], frags, i, 6)
         frag_index += frag_size
         all_packets.append(packet)
     while True:  # cycle for file

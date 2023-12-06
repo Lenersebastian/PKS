@@ -136,7 +136,9 @@ def receiving_message(server, frag_size):
             if len(parts_of_mess) == int.from_bytes(message[5:7], byteorder='big'):
                 whole_mess = ""
                 for i in range(len(parts_of_mess)):
-                    whole_mess += parts_of_mess[indexes_of_parts.index(len(parts_of_mess)-1-i)]
+                    whole_mess += parts_of_mess[indexes_of_parts.index(i)][7:-5]
+                for j in range(len(whole_mess)):
+                    whole_mess = whole_mess[:j] + chr(ord(whole_mess[j]) - 3) + whole_mess[j + 1:]
                 print(f"Whole message: {whole_mess}")
                 print(f"Received {len(parts_of_mess)} successful packets and "
                       f"{unsuccessful_packets} unsuccessful packets")
@@ -176,7 +178,7 @@ def receiving_file(server, frag_size):
             if len(parts_of_file) == int.from_bytes(message[5:7], byteorder='big'):
                 file_bytes = b''
                 for i in range(len(parts_of_file)):
-                    file_bytes += parts_of_file[indexes_of_parts.index(len(indexes_of_parts)-i-1)]
+                    file_bytes += parts_of_file[indexes_of_parts.index(i)]
                 print(f"Received successful {len(parts_of_file)} packets (file data)")
                 break
         except socket.timeout:
