@@ -2,7 +2,6 @@ import socket
 import struct
 import crcmod
 import os
-import hashlib
 
 
 def calculate_crc(data):
@@ -137,7 +136,7 @@ def receiving_message(server, frag_size):
             if len(parts_of_mess) == int.from_bytes(message[5:7], byteorder='big'):
                 whole_mess = ""
                 for i in range(len(parts_of_mess)):
-                    whole_mess += parts_of_mess[indexes_of_parts.index(i)]
+                    whole_mess += parts_of_mess[indexes_of_parts.index(len(parts_of_mess)-1-i)]
                 print(f"Whole message: {whole_mess}")
                 print(f"Received {len(parts_of_mess)} successful packets and "
                       f"{unsuccessful_packets} unsuccessful packets")
@@ -177,22 +176,9 @@ def receiving_file(server, frag_size):
             if len(parts_of_file) == int.from_bytes(message[5:7], byteorder='big'):
                 file_bytes = b''
                 for i in range(len(parts_of_file)):
-                    file_bytes += parts_of_file[indexes_of_parts.index(i)]
+                    file_bytes += parts_of_file[indexes_of_parts.index(len(indexes_of_parts)-i-1)]
                 print(f"Received successful {len(parts_of_file)} packets (file data)")
                 break
-        except socket.timeout:
-            print("socket timeout")
-            return
-    while True:
-        try:
-            message, address = server.recvfrom(2400)
-            hash_object = hashlib.sha256(file_bytes).hexdigest().encode()
-            if message == hash_object:
-                print("SHA256 sa rovna")
-            else:
-                print(hash_object)
-                print(message)
-            break
         except socket.timeout:
             print("socket timeout")
             return

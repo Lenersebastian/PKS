@@ -4,7 +4,6 @@ import time
 import crcmod
 import math
 import threading
-import hashlib
 
 
 def keep_alive(client, stop_flag):
@@ -127,11 +126,11 @@ def sending_message(client):
     print(f"Sent {frags} packets")
     all_packets = []
     for i in range(frags):
-        packet = create_packet(message_send[frag_index:frag_size + frag_index], frags, i, 6)
+        packet = create_packet(message_send[frag_index:frag_size + frag_index], frags, frags-i-1, 6)
         frag_index += frag_size
         all_packets.append(packet)
     while True:
-        packet = all_packets[counter]
+        packet = all_packets[frags-counter-1]
         if counter in indexes_of_corrupted_packets:
             packet = packet[:3] + b'\x00\x00' + packet[5:]  # wrong crc
             indexes_of_corrupted_packets.remove(counter)
@@ -215,11 +214,8 @@ def sending_files(client):
     indexes_of_corrupted_packets = corrupted_packets()
     print(f"Sending {frags} fragments of file data")
     all_packets = []
-
-    hash_object = hashlib.sha256(data).hexdigest().encode()
-
     for i in range(frags):
-        packet = create_packet(data[frag_index:frag_size + frag_index], frags, i, 6)
+        packet = create_packet(data[frag_index:frag_size + frag_index], frags, frags-1-i, 6)
         frag_index += frag_size
         all_packets.append(packet)
     while True:  # cycle for file
@@ -241,7 +237,6 @@ def sending_files(client):
                 break
         except socket.timeout:
             exit("Socket timeout")
-    client.send(hash_object)
     client.settimeout(5)
 
 
@@ -310,4 +305,5 @@ def main_f(client_socket):
             thread_keep_alive.join()
             switch(client_socket)
             break
+
 # C:\Users\lener\Desktop\macka.png
