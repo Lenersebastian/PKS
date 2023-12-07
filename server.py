@@ -47,7 +47,6 @@ def establishing_connection():
             except socket.timeout:
                 counter += 1
                 print("Retrying...")
-    server.settimeout(5)
     answer_packet = create_packet("Yep im here", 1, 0, 3)
     server.sendto(answer_packet, address)
     print("Connection established")
@@ -123,32 +122,34 @@ def receiving_message(server, frag_size):
     parts_of_mess = []
     indexes_of_parts = []
     unsuccessful_packets = 0
+    server.settimeout(5)
     while True:
         try:
             message, address = server.recvfrom(frag_size)
             server.settimeout(None)
             if receive_data_packet(server, message, address):  # successful transfer
-                parts_of_mess.append(message[9:].decode())
-                indexes_of_parts.append(int.from_bytes(message[7:9], byteorder='big'))
+                if message[9:].decode() not in parts_of_mess:
+                    parts_of_mess.append(message[9:].decode())
+                    indexes_of_parts.append(int.from_bytes(message[7:9], byteorder='big'))
             else:
                 unsuccessful_packets += 1
             print(message)
-            if len(parts_of_mess)*2 == int.from_bytes(message[5:7], byteorder='big'):
+            if len(parts_of_mess) == int.from_bytes(message[5:7], byteorder='big'):
                 whole_mess = ""
                 for i in range(len(parts_of_mess)):
-                    whole_mess += parts_of_mess[indexes_of_parts.index(i*2)]
+                    whole_mess += parts_of_mess[indexes_of_parts.index(i)]
                 print(f"Whole message: {whole_mess}")
                 print(f"Received {len(parts_of_mess)} successful packets and "
                       f"{unsuccessful_packets} unsuccessful packets")
                 break
         except socket.timeout:
             pass
-    server.settimeout(5)
 
 
 def receiving_file(server, frag_size):
     parts_of_file_name = []
     indexes_of_parts = []
+    server.settimeout(5)
     while True:
         try:
             message, address = server.recvfrom(frag_size)
@@ -173,16 +174,15 @@ def receiving_file(server, frag_size):
             if receive_data_packet(server, message, address):  # successful transfer
                 parts_of_file.append(message[9:])
                 indexes_of_parts.append(int.from_bytes(message[7:9], byteorder='big'))
-            if len(parts_of_file)*2 == int.from_bytes(message[5:7], byteorder='big'):
+            if len(parts_of_file) == int.from_bytes(message[5:7], byteorder='big'):
                 file_bytes = b''
                 for i in range(len(parts_of_file)):
-                    file_bytes += parts_of_file[indexes_of_parts.index(i*2)]
+                    file_bytes += parts_of_file[indexes_of_parts.index(i)]
                 print(f"Received successful {len(parts_of_file)} packets (file data)")
                 break
         except socket.timeout:
             print("socket timeout")
             return
-    server.settimeout(5)
     path = os.getcwd()
     print(path)
     file_path = path + file_name

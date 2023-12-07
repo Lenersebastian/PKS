@@ -126,9 +126,8 @@ def sending_message(client):
     print(f"Sent {frags} packets")
     all_packets = []
     for i in range(frags):
-        if i % 2 == 0:
-            packet = create_packet(message_send[frag_index:frag_size + frag_index], frags, i, 6)
-            all_packets.append(packet)
+        packet = create_packet(message_send[frag_index:frag_size + frag_index], frags, i, 6)
+        all_packets.append(packet)
         frag_index += frag_size
     while True:
         packet = all_packets[counter]
@@ -144,8 +143,12 @@ def sending_message(client):
             if check:
                 successful_fragments += 1
                 counter += 1
+            else:
+                packet = all_packets[counter]
+                for i in range(5):
+                    client.send(packet)
             # receive till the last packet was sent
-            if successful_fragments*2 == int.from_bytes(message_received[5:7], byteorder='big'):
+            if successful_fragments == int.from_bytes(message_received[5:7], byteorder='big'):
                 break
         except socket.timeout:
             exit("Socket timeout")
@@ -216,9 +219,8 @@ def sending_files(client):
     print(f"Sending {frags} fragments of file data")
     all_packets = []
     for i in range(frags):
-        if i % 2 == 0:
-            packet = create_packet(data[frag_index:frag_size + frag_index], frags, i, 6)
-            all_packets.append(packet)
+        packet = create_packet(data[frag_index:frag_size + frag_index], frags, i, 6)
+        all_packets.append(packet)
         frag_index += frag_size
     while True:  # cycle for file
         packet = all_packets[counter]
@@ -233,8 +235,12 @@ def sending_files(client):
             if check:
                 successful_fragments += 1
                 counter += 1
+            else:
+                packet = all_packets[counter]
+                for i in range(4):
+                    client.send(packet)
             # receive till the last packet was sent
-            if successful_fragments*2 == int.from_bytes(message[5:7], byteorder='big'):
+            if successful_fragments == int.from_bytes(message[5:7], byteorder='big'):
                 print(f"File was send, received {successful_fragments} ACK packets")
                 break
         except socket.timeout:
